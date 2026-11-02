@@ -5,7 +5,7 @@
 # Here: how the app is built and wired. In the env files: the chart version,
 # which image runs (repository + digest, written by CI), the host and the
 # settings that differ per environment.
-# Chart defaults: DEVOPS-CANARY/helm-charts/charts/rssb-app/values.yaml
+# Chart defaults: DEVOPS-CANARY/platform-charts/charts/rssb-app/values.yaml
 
 partOf: logistics
 

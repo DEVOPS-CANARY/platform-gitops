@@ -3,19 +3,19 @@
 # lab databases (Docker, outside the cluster) -> Argo CD -> repo access ->
 # ApplicationSet. After that Argo CD deploys everything in this repo by itself.
 #
-# Usage (from the root of GitOps-Repo, with kubectl pointing at YOUR cluster):
+# Usage (from the root of platform-gitops, with kubectl pointing at YOUR cluster):
 #   ./scripts/bootstrap-lab.sh
 #
 # Options (environment variables):
-#   TEAM_SECRETS=../team-secrets   path to your clone of DEVOPS-CANARY/team-secrets
+#   TEAM_SECRETS=../platform-secrets   path to your clone of DEVOPS-CANARY/platform-secrets
 #   BRANCH=main                    GitOps branch this cluster follows (asked if unset)
 #   WAIT_MINUTES=20                how long to wait for each component to start
 #
 # Safe to re-run: every step either applies the same thing again or skips.
 set -euo pipefail
 
-REPO_SSH="git@github.com:DEVOPS-CANARY/GitOps-Repo.git"
-TEAM_SECRETS="${TEAM_SECRETS:-../team-secrets}"
+REPO_SSH="git@github.com:DEVOPS-CANARY/platform-gitops.git"
+TEAM_SECRETS="${TEAM_SECRETS:-../platform-secrets}"
 # A fresh node downloads every image itself; Argo CD's (220 MB) took 13 minutes
 # per node through the office proxy.
 WAIT_MINUTES="${WAIT_MINUTES:-20}"
@@ -50,7 +50,7 @@ wait_ready() {
   fi
 }
 
-[ -f bootstrap/argo-config/applicationset.yaml ] || die "run this from the root of GitOps-Repo"
+[ -f bootstrap/argo-config/applicationset.yaml ] || die "run this from the root of platform-gitops"
 
 step "0/6 Checking tools and cluster"
 for t in kubectl docker sops git ssh-keygen openssl; do
@@ -98,7 +98,7 @@ done
 wait_ready argocd statefulset/argocd-application-controller app.kubernetes.io/name=argocd-application-controller
 ok "Argo CD is running"
 
-step "5/6 Read-only access to GitOps-Repo for YOUR Argo CD"
+step "5/6 Read-only access to platform-gitops for YOUR Argo CD"
 # One deploy key per cluster: if a laptop is lost, only its key is revoked.
 if [ ! -f "$KEY" ]; then
   ssh-keygen -t ed25519 -N "" -C "argocd-readonly@${GH_USER:-lab}" -f "$KEY" -q
@@ -108,9 +108,9 @@ can_read() { GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKey
   git ls-remote "$REPO_SSH" HEAD >/dev/null 2>&1; }
 until can_read; do
   echo
-  echo "   This key cannot read GitOps-Repo yet. Send the line below (PUBLIC key, safe"
+  echo "   This key cannot read platform-gitops yet. Send the line below (PUBLIC key, safe"
   echo "   to share) to an org admin, and ask them to add it as a READ-ONLY deploy key"
-  echo "   on DEVOPS-CANARY/GitOps-Repo, titled argocd-readonly-${GH_USER:-lab}:"
+  echo "   on DEVOPS-CANARY/platform-gitops, titled argocd-readonly-${GH_USER:-lab}:"
   echo
   echo "   $(cat "$KEY.pub")"
   echo
@@ -121,7 +121,7 @@ kubectl -n argocd create secret generic repo-devops-canary-gitops \
   --from-file=sshPrivateKey="$KEY" --dry-run=client -o yaml \
   | kubectl label --local -f - argocd.argoproj.io/secret-type=repository -o yaml \
   | kubectl apply -f - >/dev/null
-ok "Argo CD can read GitOps-Repo"
+ok "Argo CD can read platform-gitops"
 
 step "6/6 Which GitOps branch should this cluster follow?"
 echo "   main            = the shared state (what everyone runs)"
@@ -132,7 +132,7 @@ BRANCH="${BRANCH:-main}"
 [[ "$BRANCH" =~ ^[A-Za-z0-9._/-]+$ ]] \
   || die "branch '$BRANCH': use only letters, digits, '.', '_', '-' and '/'"
 git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1 \
-  || die "branch '$BRANCH' does not exist on GitOps-Repo (push it first: git push -u origin $BRANCH)"
+  || die "branch '$BRANCH' does not exist on platform-gitops (push it first: git push -u origin $BRANCH)"
 # The ApplicationSet names the branch in several places (which folders exist,
 # which commit to deploy); switch them all. '#' as the sed separator, because
 # branch names contain '/' (sandbox/<name>).

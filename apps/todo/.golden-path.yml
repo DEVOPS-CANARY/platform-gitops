@@ -1,14 +1,14 @@
-# The answers this folder was rendered with (DEVOPS-CANARY/golden-path,
+# The answers this folder was rendered with (DEVOPS-CANARY/platform-golden-path,
 # templates/gitops-app). Copier reads them for `copier update`; don't edit by hand.
 _commit: v1.6.5
-_src_path: gh:DEVOPS-CANARY/golden-path
+_src_path: gh:DEVOPS-CANARY/platform-golden-path
 app: todo
 backend: nestjs
 backend_orm: typeorm
 backend_port: 3001
 chart_version: 0.5.0
 frontend: nextjs
-gitops_repo: DEVOPS-CANARY/GitOps-Repo
+gitops_repo: DEVOPS-CANARY/platform-gitops
 host_domain: local
 needs_kafka: false
 needs_postgres: true
