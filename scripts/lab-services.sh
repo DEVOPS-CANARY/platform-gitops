@@ -2,7 +2,7 @@
 # Starts the lab's stateful services (lab-services/compose.yaml) on this machine,
 # outside the cluster, and creates one database + role per app per environment.
 #
-# Usage (from the root of GitOps-Repo, with kubectl pointing at your minikube):
+# Usage (from the root of platform-gitops, with kubectl pointing at your minikube):
 #   ./scripts/lab-services.sh
 #
 # Passwords come from team-secrets/secrets/lab-services.yaml, decrypted into
@@ -16,20 +16,20 @@
 # Kafka topics come from lab-services/kafka-topics.txt.
 #
 # Options (environment variables):
-#   TEAM_SECRETS=../team-secrets   path to your clone of DEVOPS-CANARY/team-secrets
+#   TEAM_SECRETS=../platform-secrets   path to your clone of DEVOPS-CANARY/platform-secrets
 #   LAB_BIND=<ip>                  address to publish ports on (detected if unset)
 #
 # Safe to re-run: existing data is kept, passwords are updated to match team-secrets.
 set -euo pipefail
 
-TEAM_SECRETS="${TEAM_SECRETS:-../team-secrets}"
+TEAM_SECRETS="${TEAM_SECRETS:-../platform-secrets}"
 SECRETS_FILE="$TEAM_SECRETS/secrets/lab-services.yaml"
 COMPOSE=(docker compose --progress quiet -f lab-services/compose.yaml)
 
 ok()  { printf '   ok: %s\n' "$*"; }
 die() { printf '\n   ERROR: %s\n' "$*" >&2; exit 1; }
 
-[ -f lab-services/compose.yaml ] || die "run this from the root of GitOps-Repo"
+[ -f lab-services/compose.yaml ] || die "run this from the root of platform-gitops"
 [ -f "$SECRETS_FILE" ] || die "$SECRETS_FILE not found (clone team-secrets, or set TEAM_SECRETS)"
 docker info >/dev/null 2>&1 || die "Docker is not running"
 

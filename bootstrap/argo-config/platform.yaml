@@ -16,7 +16,7 @@ metadata:
 spec:
   description: Shared platform components (entry point, autoscaling, policies)
   sourceRepos:
-    - git@github.com:DEVOPS-CANARY/GitOps-Repo.git
+    - git@github.com:DEVOPS-CANARY/platform-gitops.git
     - https://github.com/kubernetes-sigs/gateway-api.git
     - https://github.com/traefik/traefik-helm-chart.git
     - https://github.com/kedacore/charts.git
@@ -111,7 +111,7 @@ spec:
         skipCrds: true # Traefik's own CRDs: unused, we only use Gateway API
         valueFiles:
           - $values/platform/traefik/values.yaml
-    - repoURL: git@github.com:DEVOPS-CANARY/GitOps-Repo.git
+    - repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
       targetRevision: main
       ref: values
   destination:
@@ -157,7 +157,7 @@ spec:
         releaseName: keda
         valueFiles:
           - $values/platform/keda/values.yaml
-    - repoURL: git@github.com:DEVOPS-CANARY/GitOps-Repo.git
+    - repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
       targetRevision: main
       ref: values
   destination:
@@ -205,7 +205,7 @@ spec:
         releaseName: kyverno
         valueFiles:
           - $values/platform/kyverno/values.yaml
-    - repoURL: git@github.com:DEVOPS-CANARY/GitOps-Repo.git
+    - repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
       targetRevision: main
       ref: values
   destination:
@@ -240,7 +240,7 @@ metadata:
 spec:
   project: platform
   source:
-    repoURL: git@github.com:DEVOPS-CANARY/GitOps-Repo.git
+    repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
     targetRevision: main
     path: platform/policies
   destination:
@@ -273,7 +273,7 @@ spec:
         releaseName: crossplane
         valueFiles:
           - $values/platform/crossplane/values.yaml
-    - repoURL: git@github.com:DEVOPS-CANARY/GitOps-Repo.git
+    - repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
       targetRevision: main
       ref: values
   destination:
@@ -302,7 +302,7 @@ metadata:
 spec:
   project: platform
   source:
-    repoURL: git@github.com:DEVOPS-CANARY/GitOps-Repo.git
+    repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
     targetRevision: main
     path: platform/crossplane/config
   destination:

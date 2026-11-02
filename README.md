@@ -1,4 +1,4 @@
-# GitOps-Repo (DEVOPS-CANARY)
+# platform-gitops (DEVOPS-CANARY)
 
 Desired state of the lab cluster. Argo CD watches this repo and makes the
 cluster match it; nobody runs `kubectl apply` for apps.
@@ -30,7 +30,7 @@ their object names can't collide, and quotas, access and network rules can be
 set per product.
 
 Apps are rendered by the platform chart
-[`rssb-app`](https://github.com/DEVOPS-CANARY/helm-charts) at the version in
+[`rssb-app`](https://github.com/DEVOPS-CANARY/platform-charts) at the version in
 `chart.version`, so there is no Kubernetes YAML to copy per app. Argo CD gives
 the chart two values files: the product's shared `values.yaml`, then the env's
 own on top. An env file holds only what differs, so a setting can't be changed
@@ -105,9 +105,9 @@ yours can't affect anyone else's. The only shared thing is this repo's `main`.
   some Linux hosts multi-node minikube has pod networking problems.
 
 ```sh
-git clone git@github.com:DEVOPS-CANARY/GitOps-Repo.git
-git clone git@github.com:DEVOPS-CANARY/team-secrets.git
-cd GitOps-Repo
+git clone git@github.com:DEVOPS-CANARY/platform-gitops.git
+git clone git@github.com:DEVOPS-CANARY/platform-secrets.git
+cd platform-gitops
 ./scripts/bootstrap-lab.sh      # Windows: run it from Git Bash
 ```
 
@@ -133,7 +133,7 @@ experiment works, open a PR to `main`.
 **Manual steps** (what the script automates):
 
 ```sh
-sops -d ../team-secrets/secrets/sealed-secrets-key.yaml | kubectl apply -f -
+sops -d ../platform-secrets/secrets/sealed-secrets-key.yaml | kubectl apply -f -
 kubectl apply -k bootstrap/sealed-secrets --server-side
 ./scripts/lab-services.sh
 kubectl apply -k bootstrap/argocd --server-side

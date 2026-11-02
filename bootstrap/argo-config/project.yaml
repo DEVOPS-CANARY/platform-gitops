@@ -9,8 +9,8 @@ metadata:
 spec:
   description: Lab environments (one namespace per product per environment)
   sourceRepos:
-    - git@github.com:DEVOPS-CANARY/GitOps-Repo.git
-    - ghcr.io/devops-canary/charts # platform Helm charts (DEVOPS-CANARY/helm-charts)
+    - git@github.com:DEVOPS-CANARY/platform-gitops.git
+    - ghcr.io/devops-canary/charts # platform Helm charts (DEVOPS-CANARY/platform-charts)
   destinations:
     - server: https://kubernetes.default.svc
       namespace: '*-uat'

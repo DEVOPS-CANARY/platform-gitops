@@ -3,7 +3,7 @@
 # environment's values file. Values are read from stdin as KEY=VALUE lines, so
 # they never appear on the command line, on screen or on disk unencrypted.
 #
-# Usage (from the root of GitOps-Repo):
+# Usage (from the root of platform-gitops):
 #   <KEY=VALUE lines> | ./scripts/seal-secret.sh <product> <env> <name> [type]
 # Writes apps/<product>/envs/<env>/secrets/<name>.sealed.yaml, which only the
 # cluster's controller can open, and only as Secret <name> in <product>-<env>.
@@ -30,7 +30,7 @@ die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
 [ $# -ge 3 ] || die "usage: <KEY=VALUE lines> | $0 <product> <env> <name> [type]"
 product=$1 env=$2 name=$3 type=${4:-Opaque}
-[ -f bootstrap/sealed-secrets/pub-cert.pem ] || die "run this from the root of GitOps-Repo"
+[ -f bootstrap/sealed-secrets/pub-cert.pem ] || die "run this from the root of platform-gitops"
 [ -f "apps/$product/envs/$env/values.yaml" ] || die "apps/$product/envs/$env/values.yaml not found"
 [ -t 0 ] && die "pipe the KEY=VALUE lines in (see the usage at the top of this script)"
 KUBESEAL="${KUBESEAL:-$(command -v kubeseal || echo "$HOME/bin/kubeseal.exe")}"
