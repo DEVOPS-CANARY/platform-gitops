@@ -1,13 +1,13 @@
-# Fences what lab apps may do: only this repo and the platform charts as
+# Fences what apps may do: only this repo and the platform charts as
 # sources, only <product>-uat, -staging and -prod namespaces as destinations,
 # and no cluster-scoped objects except the Namespace that CreateNamespace makes.
 # A mistaken path cannot touch kube-system, argocd or another team's namespace.
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
-  name: lab
+  name: apps
 spec:
-  description: Lab environments (one namespace per product per environment)
+  description: Application environments (one namespace per product per environment)
   sourceRepos:
     - git@github.com:DEVOPS-CANARY/platform-gitops.git
     - ghcr.io/devops-canary/charts # platform Helm charts (DEVOPS-CANARY/platform-charts)

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Starts the lab's stateful services (lab-services/compose.yaml) on this machine,
+# Starts the lab's stateful services (clusters/lab/services/compose.yaml) on this machine,
 # outside the cluster, and creates one database + role per app per environment.
 #
 # Usage (from the root of platform-gitops, with kubectl pointing at your minikube):
@@ -13,7 +13,7 @@
 #   REDIS_ADMIN_PASSWORD            Redis admin (the default user)
 #   <PRODUCT>_<ENV>_KAFKA_PASSWORD  Kafka user <product>_<env>, allowed only
 #                                   topics and consumer groups <env>.<product>.*
-# Kafka topics come from lab-services/kafka-topics.txt.
+# Kafka topics come from clusters/lab/services/kafka-topics.txt.
 #
 # Options (environment variables):
 #   TEAM_SECRETS=../platform-secrets   path to your clone of DEVOPS-CANARY/platform-secrets
@@ -24,12 +24,12 @@ set -euo pipefail
 
 TEAM_SECRETS="${TEAM_SECRETS:-../platform-secrets}"
 SECRETS_FILE="$TEAM_SECRETS/secrets/lab-services.yaml"
-COMPOSE=(docker compose --progress quiet -f lab-services/compose.yaml)
+COMPOSE=(docker compose --progress quiet -f clusters/lab/services/compose.yaml)
 
 ok()  { printf '   ok: %s\n' "$*"; }
 die() { printf '\n   ERROR: %s\n' "$*" >&2; exit 1; }
 
-[ -f lab-services/compose.yaml ] || die "run this from the root of platform-gitops"
+[ -f clusters/lab/services/compose.yaml ] || die "run this from the root of platform-gitops"
 [ -f "$SECRETS_FILE" ] || die "$SECRETS_FILE not found (clone team-secrets, or set TEAM_SECRETS)"
 docker info >/dev/null 2>&1 || die "Docker is not running"
 
@@ -131,7 +131,7 @@ for var in $(compgen -e | grep -E '^[A-Z0-9]+_[A-Z0-9]+_KAFKA_PASSWORD$' || true
     kafka kafka-topics.sh --create --if-not-exists --topic "$prefix$topic" \
       --partitions "$partitions" --replication-factor 1 >/dev/null
     topics+=("$prefix$topic")
-  done < <(grep -vE '^\s*(#|$)' lab-services/kafka-topics.txt)
+  done < <(grep -vE '^\s*(#|$)' clusters/lab/services/kafka-topics.txt)
   ok "kafka user: $name (topics and groups $prefix*; topics: ${topics[*]:-none})"
 done
 

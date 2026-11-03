@@ -1,5 +1,5 @@
 # Traefik: the cluster's entry point, configured as a Gateway API controller.
-# Chart: traefik/traefik, pinned in bootstrap/argo-config/platform.yaml.
+# Chart: traefik/traefik, pinned in platform/argocd-apps/base/platform.yaml.
 # Chart defaults: https://github.com/traefik/traefik-helm-chart/blob/v41.7.1/traefik/values.yaml
 #
 # Apps never reference Traefik. They attach HTTPRoutes to the Gateway
@@ -35,17 +35,8 @@ gateway:
             - key: product
               operator: Exists
 
-# LAB: NodePort, reachable at <node IP>:30080 or through kubectl port-forward.
-# At RSSB: type LoadBalancer, given an address by MetalLB, behind FortiADC.
-service:
-  spec:
-    type: NodePort
-ports:
-  web:
-    nodePort: 30080
-  websecure:
-    expose:
-      default: false # no TLS in the lab; where RSSB terminates TLS is an open question
+# How the entry point is exposed (NodePort, LoadBalancer + MetalLB) differs per cluster:
+# clusters/<name>/values/traefik.yaml, applied over this file.
 
 # Read-only dashboard for admins, on Traefik's internal port 8080 ("traefik"
 # entrypoint), which the Service does not expose: it is never on the public

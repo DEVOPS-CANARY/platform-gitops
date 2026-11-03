@@ -1,0 +1,10 @@
+# Argo CD in its high-availability form, for clusters with three or more nodes (the RSSB
+# cluster): two API servers, two repo servers, a three-member Redis with Sentinel, and the
+# controller as a StatefulSet. Losing a node never takes GitOps down. Same release as
+# ../argocd; upgrades are a reviewed change to both lines.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd
+resources:
+  - ../argocd/namespace.yaml
+  - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/ha/install.yaml

@@ -1,0 +1,30 @@
+# A kustomize Component used by every clusters/<name>/ overlay. It copies the values of that
+# overlay's `cluster` ConfigMap into the three places in the base that differ per cluster.
+# The ConfigMap itself is marked local-config, so it is never applied to the cluster.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+replacements:
+  # Where this cluster's sealed secrets live, next to each environment's values file.
+  - source:
+      kind: ConfigMap
+      name: cluster
+      fieldPath: data.secrets_path
+    targets:
+      - select: { kind: ApplicationSet, name: environments }
+        fieldPaths: [spec.template.spec.sources.2.path]
+  # The Traefik values overlay for this cluster (service type, ports), applied over the base.
+  - source:
+      kind: ConfigMap
+      name: cluster
+      fieldPath: data.traefik_values
+    targets:
+      - select: { kind: Application, name: traefik }
+        fieldPaths: [spec.sources.0.helm.valueFiles.1]
+  # The Crossplane connections of this cluster (which database server, which Kafka).
+  - source:
+      kind: ConfigMap
+      name: cluster
+      fieldPath: data.crossplane_connections_path
+    targets:
+      - select: { kind: Application, name: crossplane-connections }
+        fieldPaths: [spec.source.path]

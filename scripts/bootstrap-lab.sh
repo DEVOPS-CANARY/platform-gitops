@@ -50,7 +50,7 @@ wait_ready() {
   fi
 }
 
-[ -f bootstrap/argo-config/applicationset.yaml ] || die "run this from the root of platform-gitops"
+[ -f clusters/lab/kustomization.yaml ] || die "run this from the root of platform-gitops"
 
 step "0/6 Checking tools and cluster"
 for t in kubectl docker sops git ssh-keygen openssl; do
@@ -74,7 +74,7 @@ step "2/6 Sealed Secrets controller"
 kubectl apply -k bootstrap/sealed-secrets --server-side >/dev/null
 wait_ready kube-system deploy/sealed-secrets-controller name=sealed-secrets-controller
 # Ask the controller itself which key it uses (what `kubeseal --fetch-cert` does).
-want="$(fingerprint < bootstrap/sealed-secrets/pub-cert.pem)"
+want="$(fingerprint < clusters/lab/sealed-secrets/pub-cert.pem)"
 served() { kubectl get --raw \
   /api/v1/namespaces/kube-system/services/http:sealed-secrets-controller:8080/proxy/v1/cert.pem \
   2>/dev/null | fingerprint; }
@@ -136,7 +136,7 @@ git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1 \
 # The ApplicationSet names the branch in several places (which folders exist,
 # which commit to deploy); switch them all. '#' as the sed separator, because
 # branch names contain '/' (sandbox/<name>).
-config="$(kubectl kustomize bootstrap/argo-config \
+config="$(kubectl kustomize clusters/lab \
   | sed -E "s#^([[:space:]]*)(revision|targetRevision): main\$#\1\2: $BRANCH#")"
 grep -qE "(revision|targetRevision): $BRANCH\$" <<<"$config" \
   || die "could not point the ApplicationSet at '$BRANCH' (no 'revision: main' found)"

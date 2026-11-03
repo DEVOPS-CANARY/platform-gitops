@@ -1,6 +1,6 @@
 # Every PR: what Argo CD would apply is rendered and checked against the API
 # schemas, so a typo fails here and not in the cluster.
-#   - bootstrap/argo-config (projects, applications, the ApplicationSet)
+#   - clusters/* (projects, applications, the ApplicationSet, per cluster)
 #   - platform/policies (Kyverno policies, network policies)
 #   - every app environment, rendered with the exact chart version it pins
 name: Validate
@@ -47,13 +47,23 @@ jobs:
           tar -xzf kubeconform-linux-amd64.tar.gz kubeconform
           sudo install -m 0755 kubeconform /usr/local/bin/kubeconform
 
-      - name: Argo CD config (bootstrap/argo-config)
+      # Every cluster overlay, rendered exactly as Argo CD renders it: the shared base plus
+      # the cluster's own values. A placeholder the overlay forgot to fill fails the build.
+      - name: Argo CD config, one render per cluster (clusters/*)
         run: |
           set -euo pipefail
-          kubectl kustomize bootstrap/argo-config | kubeconform -strict -summary \
-            -schema-location default \
-            -schema-location "$CRD_SCHEMAS/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
-            -schema-location "$CHART_SCHEMAS/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+          for cluster in clusters/*/; do
+            echo "::group::$cluster"
+            kubectl kustomize "$cluster" > rendered.yaml
+            if grep -n 'CLUSTER' rendered.yaml; then echo "::error::$cluster left a CLUSTER placeholder unfilled"; exit 1; fi
+            if grep -q 'name: cluster$' rendered.yaml; then echo "::error::$cluster emits the local-config ConfigMap"; exit 1; fi
+            kubeconform -strict -summary \
+              -schema-location default \
+              -schema-location "$CRD_SCHEMAS/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
+              -schema-location "$CHART_SCHEMAS/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
+              rendered.yaml
+            echo "::endgroup::"
+          done
 
       - name: Policies (platform/policies)
         run: |

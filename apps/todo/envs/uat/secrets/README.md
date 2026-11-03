@@ -2,7 +2,10 @@
 
 Sealed secrets go in this folder. Each one can only be opened by the cluster, and only as
 that Secret name in namespace `todo-uat`. Values are piped into the sealing script and
-never appear on a command line, on screen or in Git. Run from the root of platform-gitops.
+never appear on a command line, on screen or in Git. Run from the root of platform-gitops,
+with `CLUSTER=<cluster>` (lab, rssb-build) in front of each command: a sealed file only opens on
+the cluster whose certificate sealed it, and lands in `secrets/<cluster>/`. Record what you
+sealed in `SECRETS.md` (the register).
 
 | Secret | Keys | Who provides the values |
 |---|---|---|

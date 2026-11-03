@@ -1,0 +1,13 @@
+# RSSB build cluster. Target: type LoadBalancer with an address from MetalLB, behind FortiADC
+# (plan, D7). Until the network team names the address range (plan, question 22) the entry
+# point is a NodePort on every node; from the VPN only SSH reaches the nodes, so apps are
+# checked from a node (`ssh node-1 'curl -H Host:… http://127.0.0.1:30080/'`).
+service:
+  spec:
+    type: NodePort
+ports:
+  web:
+    nodePort: 30080
+  websecure:
+    expose:
+      default: false # TLS: at FortiADC or in the cluster, still an open question (plan, Q7)

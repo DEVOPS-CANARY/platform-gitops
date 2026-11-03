@@ -1,0 +1,10 @@
+# Lab: NodePort, reachable at <node IP>:30080 or through kubectl port-forward.
+service:
+  spec:
+    type: NodePort
+ports:
+  web:
+    nodePort: 30080
+  websecure:
+    expose:
+      default: false # no TLS in the lab
