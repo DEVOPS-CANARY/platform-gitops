@@ -47,6 +47,17 @@ jobs:
           tar -xzf kubeconform-linux-amd64.tar.gz kubeconform
           sudo install -m 0755 kubeconform /usr/local/bin/kubeconform
 
+      # The bootstrap folders a person applies (make bootstrap in platform-infra): rendered the
+      # same way, so a kustomize mistake fails here and not on node-1.
+      - name: Bootstrap folders (bootstrap/*)
+        run: |
+          set -euo pipefail
+          for dir in bootstrap/*/; do
+            echo "::group::$dir"
+            kubectl kustomize "$dir" | kubeconform -strict -summary -ignore-missing-schemas               -schema-location default               -schema-location "$CRD_SCHEMAS/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+            echo "::endgroup::"
+          done
+
       # Every cluster overlay, rendered exactly as Argo CD renders it: the shared base plus
       # the cluster's own values. A placeholder the overlay forgot to fill fails the build.
       - name: Argo CD config, one render per cluster (clusters/*)
