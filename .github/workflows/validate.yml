@@ -54,7 +54,9 @@ jobs:
           set -euo pipefail
           for dir in bootstrap/*/; do
             echo "::group::$dir"
-            kubectl kustomize "$dir" | kubeconform -strict -summary -ignore-missing-schemas               -schema-location default               -schema-location "$CRD_SCHEMAS/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+            kubectl kustomize "$dir" | kubeconform -strict -summary -ignore-missing-schemas \
+              -schema-location default \
+              -schema-location "$CRD_SCHEMAS/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
             echo "::endgroup::"
           done
 
