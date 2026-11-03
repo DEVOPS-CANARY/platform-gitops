@@ -20,7 +20,7 @@ spec:
   goTemplateOptions: ["missingkey=error"]
   generators:
     - git:
-        repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
+        repoURL: https://github.com/DEVOPS-CANARY/platform-gitops.git
         revision: main
         files:
           - path: apps/*/envs/*/values.yaml
@@ -41,10 +41,10 @@ spec:
             valueFiles:
               - '$values/apps/{{ index .path.segments 1 }}/values.yaml'
               - '$values/{{ .path.path }}/values.yaml'
-        - repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
+        - repoURL: https://github.com/DEVOPS-CANARY/platform-gitops.git
           targetRevision: main
           ref: values
-        - repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
+        - repoURL: https://github.com/DEVOPS-CANARY/platform-gitops.git
           targetRevision: main
           path: '{{ .path.path }}/secrets/CLUSTER'
       destination:
