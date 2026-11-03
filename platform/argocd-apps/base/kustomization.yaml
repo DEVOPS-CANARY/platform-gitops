@@ -1,0 +1,13 @@
+# What Argo CD manages, for every cluster: the two projects, the ApplicationSet that turns
+# app folders into Applications, and the platform Applications. Cluster-specific bits are
+# written here as the placeholder CLUSTER and filled in by each overlay in clusters/<name>/
+# (see ../per-cluster). Nothing in this folder names a cluster.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd
+resources:
+  - project.yaml
+  - applicationset.yaml
+  - charts-repo.yaml
+  - kyverno-charts-repo.yaml
+  - platform.yaml

@@ -1,0 +1,19 @@
+# The laptop lab (minikube). Applied by scripts/bootstrap-lab.sh, which can also point it at a
+# sandbox branch. Everything cluster-specific is in this folder; the rest is the shared base.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd
+resources:
+  - ../../platform/argocd-apps/base
+components:
+  - ../../platform/argocd-apps/per-cluster
+configMapGenerator:
+  - name: cluster
+    literals:
+      - secrets_path={{ .path.path }}/secrets/lab
+      - traefik_values=$values/clusters/lab/values/traefik.yaml
+      - crossplane_connections_path=clusters/lab/crossplane
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        config.kubernetes.io/local-config: "true" # read by kustomize, never applied

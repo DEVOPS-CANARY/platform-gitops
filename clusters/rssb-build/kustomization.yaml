@@ -1,0 +1,21 @@
+# The RSSB build cluster: three MicroK8s nodes built by platform-infra (3 Nov 2026).
+# Bootstrapped once by platform-infra's bootstrap playbook, which applies root.yaml; from
+# then on Argo CD applies this folder itself, so a merged PR here is a change in the cluster.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: argocd
+resources:
+  - ../../platform/argocd-apps/base
+  - root.yaml
+components:
+  - ../../platform/argocd-apps/per-cluster
+configMapGenerator:
+  - name: cluster
+    literals:
+      - secrets_path={{ .path.path }}/secrets/rssb-build
+      - traefik_values=$values/clusters/rssb-build/values/traefik.yaml
+      - crossplane_connections_path=clusters/rssb-build/crossplane
+    options:
+      disableNameSuffixHash: true
+      annotations:
+        config.kubernetes.io/local-config: "true" # read by kustomize, never applied

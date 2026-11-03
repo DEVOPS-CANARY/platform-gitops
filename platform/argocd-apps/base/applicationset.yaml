@@ -8,11 +8,13 @@
 #      (chart.version), with two values files: the product's shared
 #      apps/<product>/values.yaml, then the env's own file on top
 #   2. this repo, referenced as $values so the chart can read those files
-#   3. the secrets/ folder next to the values file (sealed secrets, plain YAML)
+#   3. this cluster's secrets/<cluster> folder next to the values file (sealed secrets).
+#      Sealed files only open on the cluster whose key sealed them, so secrets
+#      are per cluster while values are shared. CLUSTER is filled by the overlay.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: lab-environments
+  name: environments
 spec:
   goTemplate: true
   goTemplateOptions: ["missingkey=error"]
@@ -29,7 +31,7 @@ spec:
         product: '{{ index .path.segments 1 }}'
         env: '{{ .path.basename }}'
     spec:
-      project: lab
+      project: apps
       sources:
         - repoURL: ghcr.io/devops-canary/charts
           chart: rssb-app
@@ -44,7 +46,7 @@ spec:
           ref: values
         - repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
           targetRevision: main
-          path: '{{ .path.path }}/secrets'
+          path: '{{ .path.path }}/secrets/CLUSTER'
       destination:
         server: https://kubernetes.default.svc
         # A namespace per product per environment: products never collide on

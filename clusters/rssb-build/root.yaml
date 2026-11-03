@@ -1,0 +1,25 @@
+# The one Application a person applies (platform-infra, `make bootstrap`). It points Argo CD
+# at this folder, so Argo CD manages its own projects, ApplicationSet and platform
+# Applications from Git, including this Application. Everything after that is a PR.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: root
+  namespace: argocd
+  # No cascade finalizer on purpose: deleting this object must never delete what it created.
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
+    targetRevision: main
+    path: clusters/rssb-build
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 10
+      backoff: { duration: 15s, factor: 2, maxDuration: 3m }

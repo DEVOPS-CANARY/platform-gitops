@@ -7,8 +7,9 @@
 #   keda          event-driven autoscaling (e.g. a Kafka consumer on its lag)
 #   kyverno       policy engine: guard rails and per-namespace defaults
 #   policies      our policies (platform/policies), applied by Kyverno
-#   crossplane    databases, roles (and later topics) declared by apps as objects
-#                 in their namespace, created by providers (golden path layer 6)
+#   crossplane    databases, roles and topics declared by apps as objects in their
+#                 namespace, created by providers (golden path layer 6); the
+#                 providers are shared, the connections are per cluster (CLUSTER)
 apiVersion: argoproj.io/v1alpha1
 kind: AppProject
 metadata:
@@ -111,6 +112,7 @@ spec:
         skipCrds: true # Traefik's own CRDs: unused, we only use Gateway API
         valueFiles:
           - $values/platform/traefik/values.yaml
+          - $values/clusters/CLUSTER/values/traefik.yaml # service type, ports: per cluster
     - repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
       targetRevision: main
       ref: values
@@ -291,20 +293,48 @@ spec:
         pod-security.kubernetes.io/enforce: restricted
         pod-security.kubernetes.io/enforce-version: latest
 ---
-# The providers and the connections they use: provider-sql and provider-kafka
-# with the lab Postgres and Kafka admin connections (sealed). Each kind only exists once Crossplane
-# (above) and then the provider have installed their CRDs, hence the retries
-# and the dry-run skip.
+# The providers (provider-sql, provider-kafka) and how their pods run. Shared by
+# every cluster. Each kind only exists once Crossplane (above) has installed its
+# CRDs, hence the retries and the dry-run skip.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: crossplane-config
+  name: crossplane-providers
 spec:
   project: platform
   source:
     repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
     targetRevision: main
-    path: platform/crossplane/config
+    path: platform/crossplane/providers
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: crossplane-system
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 10
+      backoff: { duration: 15s, factor: 2, maxDuration: 3m }
+    syncOptions:
+      - SkipDryRunOnMissingResource=true
+---
+# The connections of THIS cluster: one ClusterProviderConfig per database server and
+# Kafka, with their sealed admin credentials, in clusters/<name>/crossplane. Apps reference
+# a connection by name, so moving from the build-phase services to RSSB's shared ones
+# is a change here and nowhere else. CLUSTER is filled by the overlay.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: crossplane-connections
+  annotations:
+    argocd.argoproj.io/sync-wave: "1" # after the providers' CRDs exist
+spec:
+  project: platform
+  source:
+    repoURL: git@github.com:DEVOPS-CANARY/platform-gitops.git
+    targetRevision: main
+    path: clusters/CLUSTER/crossplane
   destination:
     server: https://kubernetes.default.svc
     namespace: crossplane-system
