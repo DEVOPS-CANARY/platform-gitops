@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Sets up a lab cluster from nothing: team sealing key -> Sealed Secrets ->
 # lab databases (Docker, outside the cluster) -> Argo CD -> repo access ->
-# ApplicationSet. After that Argo CD deploys everything in this repo by itself.
+# the cluster folder. After that Argo CD deploys everything in this repo by itself.
 #
 # Usage (from the root of platform-gitops, with kubectl pointing at YOUR cluster):
 #   ./scripts/bootstrap-lab.sh
@@ -14,13 +14,12 @@
 # Safe to re-run: every step either applies the same thing again or skips.
 set -euo pipefail
 
-REPO_SSH="git@github.com:DEVOPS-CANARY/platform-gitops.git"
+REPO_URL="https://github.com/DEVOPS-CANARY/platform-gitops.git"
 TEAM_SECRETS="${TEAM_SECRETS:-../platform-secrets}"
 # A fresh node downloads every image itself; Argo CD's (220 MB) took 13 minutes
 # per node through the office proxy.
 WAIT_MINUTES="${WAIT_MINUTES:-20}"
 GH_USER="${GH_USER:-$(git config user.name 2>/dev/null | tr -cs 'A-Za-z0-9' '-' | tr 'A-Z' 'a-z' | sed 's/-$//')}"
-KEY="$HOME/.ssh/argocd-${GH_USER:-lab}-gitops"
 
 step() { printf '\n\033[1m== %s\033[0m\n' "$*"; }
 ok()   { printf '   ok: %s\n' "$*"; }
@@ -53,7 +52,7 @@ wait_ready() {
 [ -f clusters/lab/kustomization.yaml ] || die "run this from the root of platform-gitops"
 
 step "0/6 Checking tools and cluster"
-for t in kubectl docker sops git ssh-keygen openssl; do
+for t in kubectl docker sops git openssl; do
   command -v "$t" >/dev/null || die "'$t' is not installed (see team-secrets/README.md for sops)"
 done
 [ -f "$TEAM_SECRETS/secrets/sealed-secrets-key.yaml" ] \
@@ -99,29 +98,28 @@ wait_ready argocd statefulset/argocd-application-controller app.kubernetes.io/na
 ok "Argo CD is running"
 
 step "5/6 Read-only access to platform-gitops for YOUR Argo CD"
-# One deploy key per cluster: if a laptop is lost, only its key is revoked.
-if [ ! -f "$KEY" ]; then
-  ssh-keygen -t ed25519 -N "" -C "argocd-readonly@${GH_USER:-lab}" -f "$KEY" -q
-  ok "new key pair created: $KEY"
+# Argo CD reads this repository over HTTPS. While the repository is public that needs no
+# credential at all. Once it is private, give Argo CD the team's read-only GitHub App
+# (Contents: read, installed on platform-gitops only), the same way the RSSB cluster gets it
+# (platform-infra, make bootstrap): ARGOCD_APP_ID, ARGOCD_APP_INSTALLATION_ID, ARGOCD_APP_KEY.
+if git ls-remote "$REPO_URL" HEAD >/dev/null 2>&1; then
+  ok "platform-gitops is readable without a credential"
+elif [ -n "${ARGOCD_APP_KEY:-}" ]; then
+  [ -f "$ARGOCD_APP_KEY" ] || die "ARGOCD_APP_KEY=$ARGOCD_APP_KEY: file not found"
+  [ -n "${ARGOCD_APP_ID:-}" ] && [ -n "${ARGOCD_APP_INSTALLATION_ID:-}" ] \
+    || die "ARGOCD_APP_ID and ARGOCD_APP_INSTALLATION_ID are needed with ARGOCD_APP_KEY"
+  # The key goes from the file into the Secret; it is never printed.
+  kubectl -n argocd create secret generic repo-platform-gitops \
+    --from-literal=type=git --from-literal=url="$REPO_URL" \
+    --from-literal=githubAppID="$ARGOCD_APP_ID" \
+    --from-literal=githubAppInstallationID="$ARGOCD_APP_INSTALLATION_ID" \
+    --from-file=githubAppPrivateKey="$ARGOCD_APP_KEY" --dry-run=client -o yaml \
+    | kubectl label --local -f - argocd.argoproj.io/secret-type=repository -o yaml \
+    | kubectl apply -f - >/dev/null
+  ok "Argo CD reads platform-gitops as the read-only GitHub App"
+else
+  die "platform-gitops is private and no ARGOCD_APP_KEY was given (see SECRETS.md: argocd-reader)"
 fi
-can_read() { GIT_SSH_COMMAND="ssh -i $KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new" \
-  git ls-remote "$REPO_SSH" HEAD >/dev/null 2>&1; }
-until can_read; do
-  echo
-  echo "   This key cannot read platform-gitops yet. Send the line below (PUBLIC key, safe"
-  echo "   to share) to an org admin, and ask them to add it as a READ-ONLY deploy key"
-  echo "   on DEVOPS-CANARY/platform-gitops, titled argocd-readonly-${GH_USER:-lab}:"
-  echo
-  echo "   $(cat "$KEY.pub")"
-  echo
-  read -r -p "   Press Enter once it is added (Ctrl+C to stop and resume later)... " _
-done
-kubectl -n argocd create secret generic repo-devops-canary-gitops \
-  --from-literal=type=git --from-literal=url="$REPO_SSH" \
-  --from-file=sshPrivateKey="$KEY" --dry-run=client -o yaml \
-  | kubectl label --local -f - argocd.argoproj.io/secret-type=repository -o yaml \
-  | kubectl apply -f - >/dev/null
-ok "Argo CD can read platform-gitops"
 
 step "6/6 Which GitOps branch should this cluster follow?"
 echo "   main            = the shared state (what everyone runs)"

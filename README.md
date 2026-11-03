@@ -64,8 +64,9 @@ sealed secret.
 ## The RSSB build cluster
 
 Bootstrapped once from node-1 by `platform-infra` (`make bootstrap`): the Sealed Secrets
-controller (which generates this cluster's key), Argo CD in HA form, a read-only deploy key
-for this repository, and `clusters/rssb-build/root.yaml`. From then on Argo CD manages its own
+controller (which generates this cluster's key), Argo CD in HA form, Argo CD's read-only
+GitHub App credential for this repository (HTTPS; no SSH, no deploy keys), and
+`clusters/rssb-build/root.yaml`. From then on Argo CD manages its own
 projects, ApplicationSet and platform Applications from this folder: **a merged PR is a change
 in the cluster**, including changes to Argo CD's own configuration.
 
