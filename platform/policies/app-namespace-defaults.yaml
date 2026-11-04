@@ -126,6 +126,24 @@ spec:
                         - (( variables.settings.podCIDR ))
                         - (( variables.settings.serviceCIDR ))
           ---
+          apiVersion: networking.k8s.io/v1
+          kind: NetworkPolicy
+          metadata:
+            name: allow-platform-services
+            namespace: (( variables.ns ))
+          spec:
+            podSelector: {}
+            policyTypes: [Egress]
+            egress:
+              - to:
+                  - namespaceSelector:
+                      matchLabels:
+                        platform/role: services
+                ports:
+                  - { protocol: TCP, port: 5432 }
+                  - { protocol: TCP, port: 9092 }
+                  - { protocol: TCP, port: 6379 }
+          ---
           apiVersion: v1
           kind: ResourceQuota
           metadata:

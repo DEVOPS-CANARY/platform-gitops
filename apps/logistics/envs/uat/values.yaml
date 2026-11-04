@@ -27,6 +27,8 @@ components:
     # provider-kafka). The generated credentials reach the pods as
     # KAFKA_USERNAME/PASSWORD/BROKERS, the prefix as KAFKA_TOPIC_PREFIX:
     # nothing sealed, nothing scripted. Needs chart 0.7.
+    database:
+      managed: true # role + database logistics_uat created by the platform; DATABASE_URL composed in the pod
     kafka:
       managed: true
       topics:
@@ -42,6 +44,9 @@ components:
     image:
       repository: ghcr.io/devops-canary/logistics-backend
       digest: sha256:82a7402773d9fd43ca283dd2ceeb903d64cef8a70da00034cfdebc5f91a64b1c # develop@9cc4301 tree-30950151
+    secretRefs: [] # nothing sealed any more: database and Kafka both come from the backend's managed Secrets
+    database:
+      existingSecret: backend-db # the backend's role and database, same variables
     kafka:
       existingSecret: backend-kafka # the backend's user and prefix, same variables
     autoscaling: # KEDA lag scaling: shared settings in ../../values.yaml

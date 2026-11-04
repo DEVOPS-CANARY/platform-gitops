@@ -28,3 +28,10 @@ replacements:
     targets:
       - select: { kind: Application, name: crossplane-connections }
         fieldPaths: [spec.source.path]
+  - source:
+      kind: ConfigMap
+      name: cluster
+      fieldPath: data.policies_path
+    targets:
+      - select: { kind: Application, name: policies }
+        fieldPaths: [spec.source.path]

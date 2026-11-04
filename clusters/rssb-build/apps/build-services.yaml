@@ -1,0 +1,30 @@
+# The build-phase services (plan, D36): PostgreSQL (CloudNativePG), Kafka (Strimzi) and
+# Redis, declared in services/ and run in the namespace platform-services. Apps never
+# address them directly: the platform's Crossplane connections (crossplane/) create each
+# app's role, database, Kafka user and topics, and the chart hands the pods the result.
+# Wave 1: the operators (wave 0) must have installed their CRDs first; until they have,
+# the retries below keep trying.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: build-services
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/DEVOPS-CANARY/platform-gitops.git
+    targetRevision: main
+    path: clusters/rssb-build/services
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform-services
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 15
+      backoff: { duration: 20s, factor: 2, maxDuration: 3m }
+    syncOptions:
+      - SkipDryRunOnMissingResource=true # the operators' kinds may not exist on the first try

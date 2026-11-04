@@ -1,0 +1,68 @@
+# Kafka for the build phase: three KRaft nodes (controller and broker in one), so one
+# lost node loses no messages (replication 3, two in sync). Clients sign in with
+# SCRAM-SHA-512 on port 9092; `crossplane` is the one super user (kafka-user.yaml), the
+# platform's provider-kafka, which creates each app's user, ACLs and topics. Topics are
+# never created on demand. The entity operator runs only the user operator: topics belong
+# to provider-kafka, and two owners would fight.
+#
+# Storage is the nodes' local disk (MicroK8s hostpath-storage): a broker moved to another
+# node starts empty and catches up from the other two. Build phase only (plan, D36).
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: kraft
+  namespace: platform-services
+  labels:
+    strimzi.io/cluster: kafka
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  replicas: 3
+  roles: [controller, broker]
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: 10Gi
+        class: microk8s-hostpath
+        kraftMetadata: shared
+        deleteClaim: false
+  resources:
+    requests: { cpu: 250m, memory: 1Gi }
+    limits: { memory: 1536Mi }
+  jvmOptions:
+    -Xms: 512m
+    -Xmx: 512m
+---
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: kafka
+  namespace: platform-services
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  kafka:
+    version: 4.3.2
+    metadataVersion: 4.3-IV0
+    listeners:
+      - name: clients
+        port: 9092
+        type: internal
+        tls: false # inside the cluster, walled by network policy; TLS when the real brokers come
+        authentication:
+          type: scram-sha-512
+    authorization:
+      type: simple
+      superUsers:
+        - User:crossplane
+    config:
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+      default.replication.factor: 3
+      min.insync.replicas: 2
+      auto.create.topics.enable: "false"
+  entityOperator:
+    userOperator: {}

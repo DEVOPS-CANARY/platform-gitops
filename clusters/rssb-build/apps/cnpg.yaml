@@ -1,0 +1,51 @@
+# CloudNativePG 1.30.1 (chart 0.29.1): the PostgreSQL operator for the build phase (plan, D36).
+# It runs the `postgres` Cluster in services/ (one primary, one replica, automatic failover).
+# Installed from the chart's Git repository at its release tag, like KEDA: the project's
+# chart index lives on github.io, which some networks cannot reach.
+# Only this cluster runs it; the lab keeps its Docker services next to the laptop.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cnpg
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: platform
+  source:
+    repoURL: https://github.com/cloudnative-pg/charts.git
+    targetRevision: cloudnative-pg-v0.29.1
+    path: charts/cloudnative-pg
+    helm:
+      releaseName: cnpg
+      valuesObject:
+        resources:
+          requests: { cpu: 50m, memory: 128Mi }
+          limits: { memory: 512Mi }
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cnpg-system
+  # The operator issues its own webhook certificates and writes the CA into these at
+  # runtime. That is expected, not drift (same as KEDA).
+  ignoreDifferences:
+    - group: admissionregistration.k8s.io
+      kind: MutatingWebhookConfiguration
+      jqPathExpressions:
+        - .webhooks[]?.clientConfig.caBundle
+    - group: admissionregistration.k8s.io
+      kind: ValidatingWebhookConfiguration
+      jqPathExpressions:
+        - .webhooks[]?.clientConfig.caBundle
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 10
+      backoff: { duration: 15s, factor: 2, maxDuration: 3m }
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true # the Cluster CRD is too large for client-side apply
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: restricted
+        pod-security.kubernetes.io/enforce-version: latest

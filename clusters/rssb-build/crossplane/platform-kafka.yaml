@@ -1,0 +1,17 @@
+# The build cluster's Kafka (services/kafka.yaml), as the platform's `platform-kafka`
+# connection. provider-kafka signs in as the super user `crossplane` (services/kafka-user.yaml)
+# and creates each app's user, ACLs and topics. The connection document (brokers + SASL, one
+# JSON value) and the user's password are two keys of the same sealed Secret, so Strimzi
+# and the provider always agree on it.
+# At RSSB: the Kafka team hands over an admin principal limited to the platform's prefixes.
+apiVersion: kafka.m.crossplane.io/v1alpha1
+kind: ClusterProviderConfig
+metadata:
+  name: platform-kafka
+spec:
+  credentials:
+    source: Secret
+    secretRef:
+      namespace: platform-services
+      name: kafka-admin
+      key: credentials

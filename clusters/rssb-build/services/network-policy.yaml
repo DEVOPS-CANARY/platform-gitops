@@ -1,0 +1,44 @@
+# Who may talk to the services. Everything not listed is refused at the network (Calico,
+# MicroK8s' default). The services talk among themselves without limit (replication,
+# brokers, the Strimzi operator next to them); each outside caller gets only its port.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: services-callers
+  namespace: platform-services
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+    # Each other: Postgres replication, Kafka's cluster traffic, the operator in this namespace.
+    - from:
+        - podSelector: {}
+    # The PostgreSQL operator checks and drives its instances from its own namespace.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cnpg-system
+    # Crossplane's providers create roles, databases, users, ACLs and topics.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: crossplane-system
+      ports:
+        - { protocol: TCP, port: 5432 }
+        - { protocol: TCP, port: 9092 }
+    # KEDA reads consumer-group lag to size the workers.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: keda
+      ports:
+        - { protocol: TCP, port: 9092 }
+    # The apps: every namespace with a `product` label (the onboarding convention).
+    - from:
+        - namespaceSelector:
+            matchExpressions:
+              - { key: product, operator: Exists }
+      ports:
+        - { protocol: TCP, port: 5432 }
+        - { protocol: TCP, port: 9092 }
+        - { protocol: TCP, port: 6379 }

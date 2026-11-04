@@ -1,0 +1,9 @@
+# The policies, shared by every cluster. A cluster applies them through its own overlay
+# (clusters/<cluster>/policies/), which is where a per-cluster value such as the pod and
+# service networks is set.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - app-namespace-defaults.yaml
+  - gateway-network-policy.yaml
+  - require-pinned-images.yaml

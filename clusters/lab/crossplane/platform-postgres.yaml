@@ -7,7 +7,7 @@
 apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
 kind: ClusterProviderConfig
 metadata:
-  name: lab-postgres
+  name: platform-postgres # the platform's name for "the Postgres", same on every cluster
 spec:
   sslMode: disable # LAB: plain TCP to the Docker container; RSSB servers use TLS
   credentials:

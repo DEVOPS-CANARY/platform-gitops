@@ -1,0 +1,15 @@
+# One namespace for the three services and the Strimzi operator. The `platform/role`
+# label is what the app namespaces' network policy (platform/policies) looks for when it
+# lets pods out to a database, a broker or Redis: nothing else in the cluster gets that
+# door. Pod security stays at baseline here (Kafka's pods are not restricted-clean);
+# `warn` reports what restricted would reject.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: platform-services
+  labels:
+    platform/role: services
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/enforce-version: latest
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/warn-version: latest

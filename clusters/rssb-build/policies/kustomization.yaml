@@ -1,0 +1,22 @@
+# The shared policies with this cluster's networks. The app namespaces' "allow outside the
+# cluster" rule lets everything out EXCEPT the pod and service networks; with the lab's
+# defaults it would leave MicroK8s' networks (10.1.0.0/16 pods, 10.152.183.0/24 services)
+# open to every app. Verified on node-1:
+#   sudo grep -h -E 'cluster-cidr|service-cluster-ip-range' /var/snap/microk8s/current/args/kube-proxy /var/snap/microk8s/current/args/kube-apiserver
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../platform/policies
+patches:
+  - target:
+      group: policies.kyverno.io
+      kind: GeneratingPolicy
+      name: app-namespace-defaults
+    patch: |-
+      - op: replace
+        path: /spec/variables/0/expression
+        value: >-
+          {
+            "podCIDR": "10.1.0.0/16",
+            "serviceCIDR": "10.152.183.0/24"
+          }

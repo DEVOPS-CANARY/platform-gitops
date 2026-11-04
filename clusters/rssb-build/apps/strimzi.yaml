@@ -1,0 +1,38 @@
+# Strimzi 1.3.1: the Kafka operator for the build phase (plan, D36). It runs the `kafka`
+# cluster in services/ (three KRaft nodes) and makes the KafkaUser the platform's
+# provider-kafka signs in with. Installed from Strimzi's own OCI chart registry on quay.io,
+# where its images come from too (strimzi-charts-repo.yaml tells Argo CD it is OCI).
+# The operator lives in the services namespace and watches only that namespace: one
+# Kafka cluster, one place to look.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: strimzi
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: platform
+  source:
+    repoURL: quay.io/strimzi-helm
+    chart: strimzi-kafka-operator
+    targetRevision: 1.3.1
+    helm:
+      releaseName: strimzi
+      valuesObject:
+        watchNamespaces: [] # only its own namespace (platform-services)
+        resources:
+          requests: { cpu: 100m, memory: 384Mi }
+          limits: { memory: 512Mi }
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: platform-services
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    retry:
+      limit: 10
+      backoff: { duration: 15s, factor: 2, maxDuration: 3m }
+    syncOptions:
+      - CreateNamespace=true # the services Application owns the Namespace's labels
+      - ServerSideApply=true # the Kafka CRDs are too large for client-side apply

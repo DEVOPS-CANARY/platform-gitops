@@ -1,0 +1,21 @@
+# The platform's Kafka admin, used only by provider-kafka (crossplane/platform-kafka.yaml).
+# Strimzi registers the user with the password from the sealed Secret kafka-admin, the
+# same value the provider's connection document holds, so neither side ever prints it.
+# The Kafka cluster names this user a super user; no ACLs are needed here.
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaUser
+metadata:
+  name: crossplane
+  namespace: platform-services
+  labels:
+    strimzi.io/cluster: kafka
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  authentication:
+    type: scram-sha-512
+    password:
+      valueFrom:
+        secretKeyRef:
+          name: kafka-admin # sealed; scripts/seal-build-services.sh
+          key: password

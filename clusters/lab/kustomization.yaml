@@ -13,6 +13,7 @@ configMapGenerator:
       - secrets_path={{ .path.path }}/secrets/lab
       - traefik_values=$values/clusters/lab/values/traefik.yaml
       - crossplane_connections_path=clusters/lab/crossplane
+      - policies_path=clusters/lab/policies
     options:
       disableNameSuffixHash: true
       annotations:
