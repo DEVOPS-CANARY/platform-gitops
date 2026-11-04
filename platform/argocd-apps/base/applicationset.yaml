@@ -60,7 +60,7 @@ spec:
         # Retry with backoff so transient failures (e.g. the database not
         # accepting connections yet when migrations run) recover without a human.
         retry:
-          limit: 5
+          limit: 20 # an app's first wave waits on the platform (a database being created): keep trying for an hour
           backoff:
             duration: 10s
             factor: 2
