@@ -5,7 +5,7 @@
 # Shared settings: ../../values.yaml. Image digests are written by CI.
 
 chart:
-  version: 0.5.0 # rssb-app chart version for this environment (read by Argo CD)
+  version: 0.8.0 # rssb-app chart version for this environment (read by Argo CD)
 
 global:
   host: logistics.local
@@ -25,10 +25,18 @@ components:
       # Redis (REDIS_URL is sealed in backend-secrets): every key and channel
       # starts with this, the only prefix this environment's Redis user may use.
       REDIS_KEY_PREFIX: "logistics:prod:"
+    # Database and Kafka user declared here and created by the platform (Crossplane),
+    # like UAT: nothing to seal but JWT_SECRET and REDIS_URL.
+    database:
+      managed: true
+      providerConfig: platform-postgres
+    kafka:
+      managed: true
+      providerConfig: platform-kafka
+      topics:
+        - { name: tracking-events, partitions: 6 } # one per consumer at most (notifications maxReplicas)
       # Kafka: this user may only use topics and consumer groups starting with
       # the prefix (KAFKA_PASSWORD is sealed in backend-secrets).
-      KAFKA_USERNAME: logistics_prod
-      KAFKA_TOPIC_PREFIX: prod.logistics.
 
   frontend:
     image:
@@ -37,12 +45,14 @@ components:
     replicas: 2
 
   notifications: # the worker: shared settings in ../../values.yaml
+    secretRefs: [] # nothing sealed: database and Kafka come from the backend's managed Secrets
+    database:
+      existingSecret: backend-db # the backend's role and database, same variables
+    kafka:
+      existingSecret: backend-kafka # the backend's user and prefix, same variables
     image:
       repository: ghcr.io/devops-canary/logistics-backend
       digest: sha256:82a7402773d9fd43ca283dd2ceeb903d64cef8a70da00034cfdebc5f91a64b1c # v1.0.0@f9adea6 from staging
-    env:
-      KAFKA_USERNAME: logistics_prod
-      KAFKA_TOPIC_PREFIX: prod.logistics.
     autoscaling: # KEDA lag scaling: shared settings in ../../values.yaml
       kafka:
         topic: prod.logistics.tracking-events
