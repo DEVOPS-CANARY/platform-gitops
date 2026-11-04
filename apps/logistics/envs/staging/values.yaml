@@ -12,7 +12,7 @@ components:
   backend:
     image:
       repository: ghcr.io/devops-canary/logistics-backend
-      digest: sha256:82a7402773d9fd43ca283dd2ceeb903d64cef8a70da00034cfdebc5f91a64b1c # staging@3abed0f tree-a46dcb9f
+      digest: sha256:82a7402773d9fd43ca283dd2ceeb903d64cef8a70da00034cfdebc5f91a64b1c # staging@07b6904 tree-30950151
     env:
       ALLOWED_ORIGINS: http://staging.logistics.local
       # Required in practice: the app passes these straight to jsonwebtoken,
@@ -31,13 +31,13 @@ components:
   frontend:
     image:
       repository: ghcr.io/devops-canary/logistics-frontend
-      digest: sha256:71146bfaaaa8ae8e784789b3c59465450048c2a714f8834919a4530c27230a8e # staging@3abed0f tree-a46dcb9f
+      digest: sha256:3bd9b4e039cd1294b5558287d900f95a83cbd64877334cd8c2070fd7d560e36f # staging@07b6904 tree-30950151
     replicas: 1
 
   notifications: # the worker: shared settings in ../../values.yaml
     image:
       repository: ghcr.io/devops-canary/logistics-backend
-      digest: sha256:82a7402773d9fd43ca283dd2ceeb903d64cef8a70da00034cfdebc5f91a64b1c # staging@3abed0f tree-a46dcb9f
+      digest: sha256:82a7402773d9fd43ca283dd2ceeb903d64cef8a70da00034cfdebc5f91a64b1c # staging@07b6904 tree-30950151
     env:
       KAFKA_USERNAME: logistics_staging
       KAFKA_TOPIC_PREFIX: staging.logistics.
