@@ -43,10 +43,10 @@ the first real RSSB application arrives.
 
 | Secret | Keys | Namespace | Owner of the values | Rotation | Status |
 |---|---|---|---|---|---|
-| `ghcr-pull` | `.dockerconfigjson` (registry read token) | every app namespace | platform team | token expiry (classic tokens: set 90 days); the App-issued token replaces it (plan, layer 4) | ⏳ to seal after bootstrap; the current token is personal and expires 12 Nov 2026 |
-| `logistics` `backend-secrets` | `JWT_SECRET`, `REDIS_URL` | `logistics-<env>` | platform team (sample app) | per environment, on demand | ⏳ |
-| `logistics` `notifications-secrets` | `DATABASE_URL` (until the worker reads the managed Secret) | `logistics-<env>` | platform team | with the backend's | ⏳ |
-| `todo` `backend-secrets` | `JWT_SECRET` | `todo-uat` | platform team (sample app) | on demand | ⏳ |
+| `ghcr-pull` | `.dockerconfigjson` (registry read token) | every app namespace | platform team | token expiry (classic tokens: set 90 days); the App-issued token replaces it (plan, layer 4) | not needed on rssb-build: the sample apps' packages are public (checked 4 Nov); the row stays for the first private image |
+| `logistics` `backend-secrets` | `JWT_SECRET`, `REDIS_URL` | `logistics-<env>` | platform team (sample app) | per environment, on demand | ✅ uat (4 Nov, both generated); staging and prod when they move to rssb-build |
+| `logistics` `notifications-secrets` | `DATABASE_URL` | `logistics-<env>` | platform team | with the backend's | gone in uat (the worker reads the backend's managed database and Kafka Secrets, 4 Nov); staging and prod still seal it in the lab |
+| `todo` `backend-secrets` | `JWT_SECRET` | `todo-uat` | platform team (sample app) | on demand | ✅ uat (4 Nov, generated) |
 
 Generated, never handled by a person: each app's database role and password (`<component>-db`
 Secret, Crossplane provider-sql) and Kafka user (`<component>-kafka`, provider-kafka).
@@ -74,6 +74,7 @@ Dated, newest first. Creation, rotation, exposure, revocation. Never the value.
 
 | Date | What | Outcome |
 |---|---|---|
+| 2026-11-04 | `JWT_SECRET` sealed for logistics UAT and todo UAT on rssb-build (`openssl rand` piped into `seal-secret.sh`) | Generated, never displayed; with `REDIS_URL` these are the only sealed app values on the build cluster |
 | 2026-11-04 | Build-phase service credentials for rssb-build generated and sealed by `scripts/seal-build-services.sh` (PostgreSQL admin role, Kafka super user, Redis ACL + logistics UAT `REDIS_URL`) | Never displayed; one Secret per pair of readers, so operator and provider cannot disagree |
 | 2026-11-04 | The rssb-build sealing key backed up: `make backup-sealing-key` streams it from the cluster into `sops` (never printed, never plain on disk), committed to `platform-secrets` (PR #11) | Encrypted for the two age keys in its `.sops.yaml`; add a third teammate's key, then re-encrypt |
 | 2026-11-04 | Git inside WSL on Babou's laptop set to use the Windows credential store for GitHub | No token written in WSL; same login as before |
