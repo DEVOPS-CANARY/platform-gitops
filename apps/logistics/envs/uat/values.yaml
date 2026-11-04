@@ -27,10 +27,15 @@ components:
     # provider-kafka). The generated credentials reach the pods as
     # KAFKA_USERNAME/PASSWORD/BROKERS, the prefix as KAFKA_TOPIC_PREFIX:
     # nothing sealed, nothing scripted. Needs chart 0.7.
+    # The platform's connections (clusters/<cluster>/crossplane), the same names on every
+    # cluster. Named here, not in ../../values.yaml: staging and prod pin chart 0.5, which
+    # knows neither block yet.
     database:
       managed: true # role + database logistics_uat created by the platform; DATABASE_URL composed in the pod
+      providerConfig: platform-postgres
     kafka:
       managed: true
+      providerConfig: platform-kafka
       topics:
         - { name: tracking-events, partitions: 6 } # one per consumer at most (notifications maxReplicas)
 

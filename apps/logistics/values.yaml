@@ -28,12 +28,6 @@ components:
       # still seal KAFKA_PASSWORD and set KAFKA_USERNAME until they move too.
       KAFKA_BROKERS: host.minikube.internal:19092
     secretRefs: [backend-secrets]
-    # The platform's connections (clusters/<cluster>/crossplane), the same names on every
-    # cluster; which environments declare their database and user is set per environment.
-    database:
-      providerConfig: platform-postgres
-    kafka:
-      providerConfig: platform-kafka
     ingress:
       enabled: true
       path: /api
