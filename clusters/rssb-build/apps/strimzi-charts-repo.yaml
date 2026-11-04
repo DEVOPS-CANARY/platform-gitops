@@ -1,0 +1,13 @@
+# Strimzi publishes its chart to an OCI registry (quay.io), public, no credentials.
+# Argo CD only treats a Helm source as OCI when a repository entry says so.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: repo-strimzi-charts
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  type: helm
+  name: strimzi-charts
+  url: quay.io/strimzi-helm
+  enableOCI: "true"

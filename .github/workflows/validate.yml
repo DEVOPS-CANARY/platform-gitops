@@ -78,13 +78,29 @@ jobs:
             echo "::endgroup::"
           done
 
-      - name: Policies (platform/policies)
+      - name: Policies, one render per cluster (clusters/*/policies)
         run: |
           set -euo pipefail
-          kubeconform -strict -summary -schema-location default \
-            -schema-location "$CRD_SCHEMAS/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
-            -schema-location "$CHART_SCHEMAS/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
-            platform/policies/*.yaml
+          for dir in clusters/*/policies/; do
+            echo "::group::$dir"
+            kubectl kustomize "$dir" | kubeconform -strict -summary \
+              -schema-location default \
+              -schema-location "$CRD_SCHEMAS/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json" \
+              -schema-location "$CHART_SCHEMAS/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+            echo "::endgroup::"
+          done
+
+      - name: Build-phase services (clusters/*/services)
+        run: |
+          set -euo pipefail
+          for dir in clusters/*/services/; do
+            [ -f "$dir/kustomization.yaml" ] || continue # the lab's services are Docker, not manifests
+            echo "::group::$dir"
+            kubectl kustomize "$dir" | kubeconform -strict -summary \
+              -schema-location default \
+              -schema-location "$CRD_SCHEMAS/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json"
+            echo "::endgroup::"
+          done
 
       # The policies against sample objects (platform/policies/tests): the
       # good pod must pass, the bad ones must fail, the namespace must get its
@@ -106,7 +122,7 @@ jobs:
           if grep -iE 'Pod/good.*fail' result.txt; then echo "::error::the compliant pod was rejected"; exit 1; fi
           if grep -iE '\bfail\b' result.txt | grep -v 'Pod/bad-'; then echo "::error::an unexpected rule failed"; exit 1; fi
           n=$(cat generated/*.yaml | grep -c '^kind: NetworkPolicy' || true)
-          [ "$n" -ge 5 ] || { echo "::error::expected 5 NetworkPolicies generated for the namespace, got $n"; exit 1; }
+          [ "$n" -ge 6 ] || { echo "::error::expected 6 NetworkPolicies generated for the namespace, got $n"; exit 1; }
           echo "OK: compliant pod passes, non-compliant pods fail, $n network policies + quota + limits generated"
 
       # Each environment with the chart version its values file pins, exactly

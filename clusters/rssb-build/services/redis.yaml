@@ -1,0 +1,99 @@
+# Redis for the build phase: one instance (the logistics backend shares WebSocket events
+# and rate limits across its replicas through it). Users and their key prefixes come from
+# the sealed ACL file (Secret redis-users, written by scripts/seal-build-services.sh), one
+# user per app environment, like the lab's lab-services.sh did; each app's REDIS_URL is
+# sealed into its own namespace by the same script.
+#
+# One instance is a single point of failure: losing its node pauses live tracking until the
+# pod returns (data is appended to disk and survives a restart). Acceptable for the build
+# phase; RSSB's own Redis replaces it (plan, D36).
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: platform-services
+  labels:
+    app.kubernetes.io/name: redis
+spec:
+  selector:
+    app.kubernetes.io/name: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis
+  namespace: platform-services
+  labels:
+    app.kubernetes.io/name: redis
+spec:
+  serviceName: redis
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: redis
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999 # the image's `redis` user
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: redis
+          # Same pinned image as the lab (clusters/lab/services/compose.yaml).
+          image: redis:8.10.3-alpine3.23@sha256:896f241f438ab6a210cfb24f573b84bea721a4cbe67f1b4fd07eb638b3b02a7b
+          args:
+            - redis-server
+            - --aclfile
+            - /etc/redis/users.acl
+            - --appendonly
+            - "yes"
+            - --dir
+            - /data
+          ports:
+            - name: redis
+              containerPort: 6379
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { memory: 256Mi }
+          readinessProbe:
+            tcpSocket:
+              port: redis
+            periodSeconds: 5
+          livenessProbe:
+            tcpSocket:
+              port: redis
+            periodSeconds: 20
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: users
+              mountPath: /etc/redis
+              readOnly: true
+      volumes:
+        - name: users
+          secret:
+            secretName: redis-users # sealed; scripts/seal-build-services.sh
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: microk8s-hostpath
+        resources:
+          requests:
+            storage: 1Gi

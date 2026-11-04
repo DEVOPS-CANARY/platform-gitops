@@ -32,7 +32,7 @@ apps/<product>/
     values.yaml            chart version, image digests, host, per-env settings
     secrets/<cluster>/     sealed secrets, per cluster: a file only opens where it was sealed
 SECRETS.md                 the secrets register: rules, inventory, handling log
-scripts/                   lab helpers: bootstrap-lab.sh, lab-services.sh, seal-secret.sh, wall-test.sh
+scripts/                   bootstrap-lab.sh, lab-services.sh (lab), seal-secret.sh, seal-build-services.sh, wall-test.sh
 ```
 
 ## How a cluster is made of this repo
@@ -73,6 +73,13 @@ in the cluster**, including changes to Argo CD's own configuration.
 Only SSH reaches the nodes from the VPN (3 Nov 2026), so there is no `kubectl` from laptops
 yet. To look: `ssh node-1 'sudo microk8s kubectl get applications -n argocd'` (sudo is logged).
 Apps answer on any node's port 30080 with the right `Host:` header until MetalLB exists.
+
+The build-phase services (plan, D36) run inside this cluster, declared in
+`clusters/rssb-build/services/` (PostgreSQL by CloudNativePG, Kafka by Strimzi, Redis) with
+their operators in `clusters/rssb-build/apps/`. Apps reach them only through the platform's
+connections `platform-postgres` and `platform-kafka` (`clusters/rssb-build/crossplane/`),
+the same names the lab gives its Docker services. Their credentials are generated and sealed
+by `scripts/seal-build-services.sh`, never seen (see `clusters/rssb-build/services/README.md`).
 
 ## The laptop lab
 

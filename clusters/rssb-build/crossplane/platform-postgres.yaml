@@ -1,0 +1,17 @@
+# The build cluster's PostgreSQL (services/postgres.yaml), as the platform's `platform-postgres`
+# connection. Apps name this connection (the chart's default) and get their own role and
+# database from provider-sql; the admin credentials stay in platform-services, never in an
+# app namespace. The Secret is the same one CloudNativePG reads for the `crossplane` role, so
+# both sides always hold the same password.
+# At RSSB: one ClusterProviderConfig per database server the DBA team hands over.
+apiVersion: postgresql.sql.m.crossplane.io/v1alpha1
+kind: ClusterProviderConfig
+metadata:
+  name: platform-postgres
+spec:
+  sslMode: require # the server's TLS is self-signed by the operator: encrypted, CA not checked
+  credentials:
+    source: PostgreSQLConnectionSecret
+    connectionSecretRef:
+      name: postgres-admin
+      namespace: platform-services

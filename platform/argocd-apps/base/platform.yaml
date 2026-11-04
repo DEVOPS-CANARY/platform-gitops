@@ -23,6 +23,8 @@ spec:
     - https://github.com/kedacore/charts.git
     - ghcr.io/kyverno/charts
     - https://charts.crossplane.io/stable
+    - https://github.com/cloudnative-pg/charts.git # PostgreSQL operator (build phase, D36)
+    - quay.io/strimzi-helm # Kafka operator (build phase, D36)
   destinations:
     - server: https://kubernetes.default.svc
       namespace: gateway
@@ -36,6 +38,10 @@ spec:
     # server's client-auth settings (standard for any metrics API server).
     - server: https://kubernetes.default.svc
       namespace: kube-system
+    - server: https://kubernetes.default.svc
+      namespace: cnpg-system # PostgreSQL operator (build phase)
+    - server: https://kubernetes.default.svc
+      namespace: platform-services # build-phase PostgreSQL, Kafka, Redis
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace
@@ -55,6 +61,8 @@ spec:
       kind: APIService
     - group: admissionregistration.k8s.io # KEDA checks ScaledObjects on create
       kind: ValidatingWebhookConfiguration
+    - group: admissionregistration.k8s.io # CloudNativePG defaults its Clusters on create
+      kind: MutatingWebhookConfiguration
     - group: policies.kyverno.io # our policies (platform/policies)
       kind: GeneratingPolicy
     - group: policies.kyverno.io
@@ -63,9 +71,9 @@ spec:
       kind: Provider
     - group: pkg.crossplane.io
       kind: DeploymentRuntimeConfig
-    - group: postgresql.sql.m.crossplane.io # the lab Postgres, shared by all apps
+    - group: postgresql.sql.m.crossplane.io # the platform's Postgres connection, shared by all apps
       kind: ClusterProviderConfig
-    - group: kafka.m.crossplane.io # the lab Kafka, shared by all apps
+    - group: kafka.m.crossplane.io # the platform's Kafka connection, shared by all apps
       kind: ClusterProviderConfig
 ---
 # Gateway API v1.6.3: the version Traefik 3.7 supports. Straight from the
@@ -244,7 +252,7 @@ spec:
   source:
     repoURL: https://github.com/DEVOPS-CANARY/platform-gitops.git
     targetRevision: main
-    path: platform/policies
+    path: clusters/CLUSTER/policies # the shared policies with this cluster's networks
   destination:
     server: https://kubernetes.default.svc
     namespace: kyverno

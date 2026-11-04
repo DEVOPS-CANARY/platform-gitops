@@ -1,0 +1,15 @@
+# The build-phase services of the RSSB build cluster (plan, D36), applied by the
+# build-services Application (../apps/build-services.yaml). Sealed files are written by
+# scripts/seal-build-services.sh and only open on this cluster.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - namespace.yaml
+  - network-policy.yaml
+  - postgres-admin.sealed.yaml
+  - postgres.yaml
+  - kafka-admin.sealed.yaml
+  - kafka.yaml
+  - kafka-user.yaml
+  - redis-users.sealed.yaml
+  - redis.yaml

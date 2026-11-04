@@ -1,0 +1,37 @@
+# PostgreSQL for the build phase: one primary and one replica, failover by the operator.
+# Apps do not get this server's address: the platform's provider-sql signs in as the
+# `crossplane` role (crossplane/platform-postgres.yaml) and creates each app's own role and
+# database; the chart composes the app's DATABASE_URL from the result.
+#
+# Storage is the nodes' local disk (MicroK8s hostpath-storage). The replica keeps a full
+# copy, so one lost node is survived; a pod moved to another node starts empty and is
+# rebuilt from the primary. Fine for the build phase, not for production data (plan, D36).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: postgres
+  namespace: platform-services
+  annotations:
+    argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+spec:
+  instances: 2
+  primaryUpdateStrategy: unsupervised
+  storage:
+    size: 10Gi
+    storageClass: microk8s-hostpath
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 1Gi }
+  enableSuperuserAccess: false # nobody signs in as `postgres`; the role below is the only admin
+  managed:
+    roles:
+      - name: crossplane
+        ensure: present
+        comment: the platform's provider-sql; creates each app's role and database
+        login: true
+        superuser: true # CREATEDB and CREATEROLE are not enough to hand ownership over
+        passwordSecret:
+          name: postgres-admin # sealed; scripts/seal-build-services.sh
+  postgresql:
+    parameters:
+      max_connections: "200"

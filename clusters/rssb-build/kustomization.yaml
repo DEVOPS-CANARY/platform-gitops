@@ -7,6 +7,11 @@ namespace: argocd
 resources:
   - ../../platform/argocd-apps/base
   - root.yaml
+  # Only this cluster: the build-phase services and their operators (plan, D36).
+  - apps/cnpg.yaml
+  - apps/strimzi-charts-repo.yaml
+  - apps/strimzi.yaml
+  - apps/build-services.yaml
 components:
   - ../../platform/argocd-apps/per-cluster
 configMapGenerator:
@@ -15,6 +20,7 @@ configMapGenerator:
       - secrets_path={{ .path.path }}/secrets/rssb-build
       - traefik_values=$values/clusters/rssb-build/values/traefik.yaml
       - crossplane_connections_path=clusters/rssb-build/crossplane
+      - policies_path=clusters/rssb-build/policies
     options:
       disableNameSuffixHash: true
       annotations:

@@ -6,7 +6,7 @@
 apiVersion: kafka.m.crossplane.io/v1alpha1
 kind: ClusterProviderConfig
 metadata:
-  name: lab-kafka
+  name: platform-kafka # the platform's name for "the Kafka", same on every cluster
 spec:
   credentials:
     source: Secret

@@ -1,0 +1,16 @@
+---
+apiVersion: bitnami.com/v1alpha1
+kind: SealedSecret
+metadata:
+  name: redis-users
+  namespace: platform-services
+  annotations:
+    argocd.argoproj.io/sync-wave: "-1" # before the operators read it
+spec:
+  encryptedData:
+    users.acl: AgCN6GDdFo7b+724Ex3v2pkudBZmdjgL+3BAqyGC2thzmgYyFZuDF9iC5ohGo9bARCTDbFEYNgBYYccAuD8a+nhVBy8ScwXDFziRw+f4p7I6+vj9sS9V9JQh0chEOSSkALZtIbYi4nnFLpch8phqwyEbXbilr7Qvo6azSUNKbdPYgG3Btyo6FTJXzQ4JOtM6OuLlxffmQ5h5MdQTAKXN//MU6H3aw3mMchRgAYumjiLkoGCUS94ixxAP44hUMP745AzGYUaQDgqCW61oYqn4AxkPbwU2dMvnKE1lc0I0SHNOs+lgclFOU2ubIxs73Y/qbDtfwQCPFDHMbi59INBhq21UdsP/FTS9hmSfKJ9TJnQZjg+BjgFCX2zXGEpmH0lcfF85PZ3Ph5KQxdwnG6LGd4ZXwIHF29N2RLGnW9MEnL9fZLSF8h/gIK1pzY1pZr66x28DGOmf77Dhre4ImJWmHGZaml1eb4KH3RmIHj2UZuO9utXxEwEoIUgSweQeZOzbGCM3NVuSFiAwnE1WkZeiBiroxlDrLZge1djJuzzce9CDqCmDBzmZYfxrYXfdXHRhvkp4g7dL9LrbarsRiGPaKaQZrJ+moA2AoAo+LvF+Qfjad1bIOyV+yEdFsaFxLrBKQdLF/WGdzhF0zhOWz9GlLjQnxCRkEJeTXWIC4oV7c/dWY7DOkHu1jsfaL/PrnHpu9AywaghiwLXsXMhxc3vsgdBRMGdksmNXxVBgboOns9/IqP8FyTrD3heyIGhLP4hZMHxm69NuC5GkbhhBFhswJ1WWQn3gE+fb/Lq1mi23c/Z38YLpoNkKAfhl71g0H2ImEeAOoYb+vmH5E+9CTUY99Itrpfxi/Zqi5bh0ejD/xhYvE8B622+lZDSgreNdfL8Xa6dgQ18q9+A2OybpUsa7OWydywt28WEQVEw2rzAgBDpxZqr0XPwFgcR4teREk8qQx0u7SCHL8AJvriA2O1B4flbrfsdXB6oCAGk41PD6SkXEb+sb4cqymT0zO/YZnMKV7EFtGn9tp0y8Ieqxu9ZADHq/y6sidMa7s9mY1L2F6c+vNXSnloSqEfd3PsiGyphw6A==
+  template:
+    metadata:
+      name: redis-users
+      namespace: platform-services
+    type: Opaque
