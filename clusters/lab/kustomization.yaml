@@ -14,6 +14,7 @@ configMapGenerator:
       - traefik_values=$values/clusters/lab/values/traefik.yaml
       - crossplane_connections_path=clusters/lab/crossplane
       - policies_path=clusters/lab/policies
+      - environments=apps/*/envs/*/values.yaml # every environment: the laptops run the whole promotion path
     options:
       disableNameSuffixHash: true
       annotations:

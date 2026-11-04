@@ -31,6 +31,13 @@ replacements:
   - source:
       kind: ConfigMap
       name: cluster
+      fieldPath: data.environments
+    targets:
+      - select: { kind: ApplicationSet, name: environments }
+        fieldPaths: [spec.generators.0.git.files.0.path]
+  - source:
+      kind: ConfigMap
+      name: cluster
       fieldPath: data.policies_path
     targets:
       - select: { kind: Application, name: policies }

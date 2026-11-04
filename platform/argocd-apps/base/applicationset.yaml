@@ -11,6 +11,10 @@
 #   3. this cluster's secrets/<cluster> folder next to the values file (sealed secrets).
 #      Sealed files only open on the cluster whose key sealed them, so secrets
 #      are per cluster while values are shared. CLUSTER is filled by the overlay.
+#
+# Which environments a cluster runs is the cluster's choice: its folder sets the
+# files pattern below (ConfigMap `cluster`, key `environments`). The lab and the build
+# cluster run every environment; a production cluster lists only envs/prod.
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
@@ -23,7 +27,7 @@ spec:
         repoURL: https://github.com/DEVOPS-CANARY/platform-gitops.git
         revision: main
         files:
-          - path: apps/*/envs/*/values.yaml
+          - path: apps/*/envs/*/values.yaml # replaced per cluster (clusters/<cluster>/kustomization.yaml)
   template:
     metadata:
       name: '{{ index .path.segments 1 }}-{{ .path.basename }}'

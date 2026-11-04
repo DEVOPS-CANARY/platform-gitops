@@ -21,6 +21,7 @@ configMapGenerator:
       - traefik_values=$values/clusters/rssb-build/values/traefik.yaml
       - crossplane_connections_path=clusters/rssb-build/crossplane
       - policies_path=clusters/rssb-build/policies
+      - environments=apps/*/envs/*/values.yaml # every environment, side by side, while the path is proven; the production cluster will list envs/prod only
     options:
       disableNameSuffixHash: true
       annotations:
