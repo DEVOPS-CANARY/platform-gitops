@@ -1,7 +1,9 @@
-# CloudNativePG 1.30.1 (chart 0.29.1): the PostgreSQL operator for the build phase (plan, D36).
+# CloudNativePG 1.30.1: the PostgreSQL operator for the build phase (plan, D36).
 # It runs the `postgres` Cluster in services/ (one primary, one replica, automatic failover).
-# Installed from the chart's Git repository at its release tag, like KEDA: the project's
-# chart index lives on github.io, which some networks cannot reach.
+# Installed from the project's release manifest in its Git repository at the release tag,
+# not from its Helm chart: the chart depends on a dashboards chart served from github.io,
+# which Argo CD must fetch to render and which the nodes cannot reach (same block as in the
+# lab). The manifest is self-contained: namespace, CRDs, RBAC, the operator, its webhooks.
 # Only this cluster runs it; the lab keeps its Docker services next to the laptop.
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -12,15 +14,11 @@ metadata:
 spec:
   project: platform
   source:
-    repoURL: https://github.com/cloudnative-pg/charts.git
-    targetRevision: cloudnative-pg-v0.29.1
-    path: charts/cloudnative-pg
-    helm:
-      releaseName: cnpg
-      valuesObject:
-        resources:
-          requests: { cpu: 50m, memory: 128Mi }
-          limits: { memory: 512Mi }
+    repoURL: https://github.com/cloudnative-pg/cloudnative-pg.git
+    targetRevision: v1.30.1
+    path: releases
+    directory:
+      include: cnpg-1.30.1.yaml # the folder holds every release; only this one is applied
   destination:
     server: https://kubernetes.default.svc
     namespace: cnpg-system
@@ -43,9 +41,4 @@ spec:
       limit: 10
       backoff: { duration: 15s, factor: 2, maxDuration: 3m }
     syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true # the Cluster CRD is too large for client-side apply
-    managedNamespaceMetadata:
-      labels:
-        pod-security.kubernetes.io/enforce: restricted
-        pod-security.kubernetes.io/enforce-version: latest
+      - ServerSideApply=true # the CRDs are too large for client-side apply

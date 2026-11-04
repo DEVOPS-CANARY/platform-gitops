@@ -23,7 +23,7 @@ spec:
     - https://github.com/kedacore/charts.git
     - ghcr.io/kyverno/charts
     - https://charts.crossplane.io/stable
-    - https://github.com/cloudnative-pg/charts.git # PostgreSQL operator (build phase, D36)
+    - https://github.com/cloudnative-pg/cloudnative-pg.git # PostgreSQL operator, release manifest (build phase, D36)
     - quay.io/strimzi-helm # Kafka operator (build phase, D36)
   destinations:
     - server: https://kubernetes.default.svc
