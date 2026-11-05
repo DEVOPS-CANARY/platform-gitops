@@ -12,7 +12,7 @@ components:
   backend:
     image:
       repository: ghcr.io/devops-canary/todo-backend
-      digest: sha256:0000000000000000000000000000000000000000000000000000000000000000 # placeholder: the first deploy from develop writes the real digest
+      digest: sha256:78cb1db64ea7d771e9eecd3945773978758d58dd63fac132e87de321480ef245 # develop@21f165f tree-6ca97820
     env:
       ALLOWED_ORIGINS: http://uat.todo.local
 
