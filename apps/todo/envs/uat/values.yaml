@@ -19,4 +19,4 @@ components:
   frontend:
     image:
       repository: ghcr.io/devops-canary/todo-frontend
-      digest: sha256:0000000000000000000000000000000000000000000000000000000000000000 # placeholder: the first deploy from develop writes the real digest
+      digest: sha256:cf27edb50022f29aef42e1a8716d4b916b65da41d862def99ac6d9d0a3047910 # develop@cd2871b tree-44ec4750
