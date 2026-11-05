@@ -23,10 +23,8 @@ components:
     env:
       NODE_ENV: production
       PORT: "3001"
-      # Kafka (lab: in lab-services, outside the cluster). UAT declares its
-      # user and topic (kafka.managed in envs/uat, chart 0.7); staging and prod
-      # still seal KAFKA_PASSWORD and set KAFKA_USERNAME until they move too.
-      KAFKA_BROKERS: host.minikube.internal:19092
+      # Kafka: every environment declares its user and topics (kafka.managed in
+      # envs/<env>); the platform hands the pods KAFKA_BROKERS and the credentials.
     secretRefs: [backend-secrets]
     ingress:
       enabled: true
@@ -55,7 +53,6 @@ components:
     secretRefs: [notifications-secrets] # DATABASE_URL (+ KAFKA_PASSWORD where not managed)
     env:
       NODE_ENV: production
-      KAFKA_BROKERS: host.minikube.internal:19092
       # LAB: each notification "takes" 200 ms (stands in for an email or SMS
       # call), so a burst of events builds visible consumer lag for KEDA.
       NOTIFY_DELAY_MS: "200"
