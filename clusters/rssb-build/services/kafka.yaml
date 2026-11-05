@@ -56,7 +56,7 @@ spec:
     authorization:
       type: simple
       superUsers:
-        - User:crossplane
+        - crossplane # Strimzi adds the User: prefix itself; writing it twice makes an ordinary user
     config:
       offsets.topic.replication.factor: 3
       transaction.state.log.replication.factor: 3
