@@ -39,6 +39,10 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: redis
+      annotations:
+        # Redis reads the user file once, at start. Kustomize copies the sealed file's
+        # ciphertext here (kustomization.yaml), so a new file means a new pod.
+        checksum/users-acl: REPLACED
     spec:
       securityContext:
         runAsNonRoot: true
@@ -88,6 +92,9 @@ spec:
         - name: users
           secret:
             secretName: redis-users # sealed; scripts/seal-build-services.sh
+            items:
+              - key: users-acl
+                path: users.acl
   volumeClaimTemplates:
     - metadata:
         name: data

@@ -13,3 +13,13 @@ resources:
   - kafka-user.yaml
   - redis-users.sealed.yaml
   - redis.yaml
+# Redis loads its users at start only: the sealed file's ciphertext becomes a pod
+# annotation, so re-sealing the users restarts Redis with the new file.
+replacements:
+  - source:
+      kind: SealedSecret
+      name: redis-users
+      fieldPath: spec.encryptedData.users-acl
+    targets:
+      - select: { kind: StatefulSet, name: redis }
+        fieldPaths: [spec.template.metadata.annotations.checksum/users-acl]

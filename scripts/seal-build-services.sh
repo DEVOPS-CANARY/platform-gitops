@@ -11,7 +11,7 @@
 # Writes, sealed with clusters/<cluster>/sealed-secrets/pub-cert.pem:
 #   clusters/<cluster>/services/postgres-admin.sealed.yaml   role `crossplane` for CloudNativePG and provider-sql
 #   clusters/<cluster>/services/kafka-admin.sealed.yaml      user `crossplane` for Strimzi and provider-kafka
-#   clusters/<cluster>/services/redis-users.sealed.yaml      Redis ACL file: the admin and one user per app environment
+#   clusters/<cluster>/services/redis-users.sealed.yaml      Redis ACL file (key users-acl): the admin and one user per app environment
 # and, for every <product>-<env> given, REDIS_URL into
 #   apps/<product>/envs/<env>/secrets/<cluster>/backend-secrets.sealed.yaml (merged if it exists)
 #
@@ -97,7 +97,7 @@ for p in "$@"; do
   unset pw
 done
 # Built by hand: kubectl's --from-file cannot read stdin on every platform.
-printf 'apiVersion: v1\nkind: Secret\nmetadata:\n  name: redis-users\n  namespace: %s\ntype: Opaque\ndata:\n  users.acl: %s\n' \
+printf 'apiVersion: v1\nkind: Secret\nmetadata:\n  name: redis-users\n  namespace: %s\ntype: Opaque\ndata:\n  users-acl: %s\n' \
   "$ns" "$(printf '%s\n' "$acl" | base64 | tr -d '\r\n')" \
   | seal "$out/redis-users.sealed.yaml"
 unset acl
