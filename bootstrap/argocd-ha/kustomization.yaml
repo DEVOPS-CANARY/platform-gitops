@@ -8,3 +8,15 @@ namespace: argocd
 resources:
   - namespace.yaml # kustomize refuses files outside this folder
   - https://raw.githubusercontent.com/argoproj/argo-cd/v3.5.5/manifests/ha/install.yaml
+patches:
+  # The API server speaks plain HTTP: it sits behind the platform's Gateway (HTTPRoute in
+  # clusters/<name>/argocd-route.yaml), where TLS ends. Without this it redirects every HTTP
+  # request to HTTPS on its own port, which the Gateway does not carry. On a cluster
+  # bootstrapped before this line: patch the ConfigMap and restart argocd-server once.
+  - patch: |-
+      apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: argocd-cmd-params-cm
+      data:
+        server.insecure: "true"
