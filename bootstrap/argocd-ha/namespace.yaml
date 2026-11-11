@@ -2,3 +2,5 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: argocd
+  labels:
+    gateway.platform/routes: allowed # the Argo CD screen attaches to the public Gateway

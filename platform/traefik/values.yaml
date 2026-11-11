@@ -20,8 +20,9 @@ ingressClass:
 gatewayClass:
   name: traefik
 
-# The one shared entry point. Only app namespaces (labelled "product" by the
-# ApplicationSet) may attach routes to it; anything else is ignored.
+# The one shared entry point. Routes may attach from namespaces that carry the label below:
+# every app namespace (set by the ApplicationSet) and the platform screens exposed on purpose
+# (argocd, clusters/<name>/argocd-route.yaml). Anything else is ignored.
 gateway:
   name: public
   listeners:
@@ -31,21 +32,8 @@ gateway:
       namespacePolicy:
         from: Selector
         selector:
-          matchExpressions:
-            - key: product
-              operator: Exists
-    # The Argo CD screen, on the same port under one fixed host name, and only the argocd
-    # namespace may attach to it (clusters/<name>/argocd-route.yaml). Every namespace carries
-    # kubernetes.io/metadata.name, so no label is added to Argo CD's namespace.
-    argocd:
-      port: 8000
-      protocol: HTTP
-      hostname: argocd.local
-      namespacePolicy:
-        from: Selector
-        selector:
           matchLabels:
-            kubernetes.io/metadata.name: argocd
+            gateway.platform/routes: allowed
 
 # How the entry point is exposed (NodePort, LoadBalancer + MetalLB) differs per cluster:
 # clusters/<name>/values/traefik.yaml, applied over this file.

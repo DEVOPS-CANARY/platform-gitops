@@ -74,10 +74,11 @@ Only SSH reaches the nodes from the VPN (3 Nov 2026), so there is no `kubectl` f
 yet. To look: `ssh node-1 'sudo microk8s kubectl get applications -n argocd'` (sudo is logged).
 Apps answer on any node's port 30080 with the right `Host:` header until MetalLB exists.
 
-The TCP ports 30080 and 30443 are open from the VPN (9 Nov 2026). With a hosts-file line
-mapping a name to any node, the apps and the Argo CD screen (`http://argocd.local:30080`,
-`clusters/rssb-build/argocd-route.yaml`, its own listener on the Gateway) open in a browser;
-DNS names replace the hosts file later (plan, Q22).
+The TCP ports 30080 and 30443 are open from the VPN (9 Nov 2026). The Argo CD screen opens
+on `http://<any node>:30080/argocd/` with no DNS name (`clusters/rssb-build/argocd-route.yaml`,
+a path on the Gateway). The apps need their host name: a hosts-file line mapping it to a node
+until DNS names exist (plan, Q22). Only namespaces labelled `gateway.platform/routes: allowed`
+(every app namespace, and `argocd`) may attach routes to the public Gateway.
 
 The build-phase services (plan, D36) run inside this cluster, declared in
 `clusters/rssb-build/services/` (PostgreSQL by CloudNativePG, Kafka by Strimzi, Redis) with

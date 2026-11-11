@@ -76,6 +76,7 @@ spec:
             # Selected on by environment-wide policies (quotas, network walls).
             product: '{{ index .path.segments 1 }}'
             env: '{{ .path.basename }}'
+            gateway.platform/routes: allowed # may attach HTTPRoutes to the public Gateway
             # Pod Security Admission: reject pods that run as root, escalate
             # privileges, or keep Linux capabilities.
             pod-security.kubernetes.io/enforce: restricted
