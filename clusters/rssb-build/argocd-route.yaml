@@ -1,8 +1,8 @@
-# The Argo CD screen through the entry point, like any app: a host name on the public Gateway
-# (its "argocd" listener), plain HTTP to the API server (bootstrap/argocd-ha sets
-# server.insecure; TLS ends at the Gateway). Until DNS exists (plan, Q22), a hosts-file line
-# maps the name to a node and the screen opens on http://argocd.local:30080. Sign in as admin
-# (make argocd-password in platform-infra) until SSO (plan, Q9).
+# The Argo CD screen through the entry point, like any app: on the public Gateway under the
+# path /argocd (bootstrap/argocd-ha sets server.rootpath and server.insecure; TLS ends at the
+# Gateway), with no host name, so it opens on http://<any node>:30080/argocd/ from the VPN
+# without DNS or a hosts file. A DNS name replaces the path later (plan, Q22). Sign in as
+# admin (the initial admin secret, read on node-1) until SSO (plan, Q9).
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
@@ -12,10 +12,12 @@ spec:
   parentRefs:
     - name: public
       namespace: gateway
-      sectionName: argocd
-  hostnames:
-    - argocd.local
+      sectionName: web
   rules:
-    - backendRefs:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /argocd
+      backendRefs:
         - name: argocd-server
           port: 80

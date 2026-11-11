@@ -7,7 +7,7 @@ namespace: argocd
 resources:
   - ../../platform/argocd-apps/base
   - root.yaml
-  - argocd-route.yaml # the Argo CD screen on the entry point (argocd.local, port 30080)
+  - argocd-route.yaml # the Argo CD screen on the entry point (/argocd on port 30080)
   # Only this cluster: the build-phase services and their operators (plan, D36).
   - apps/cnpg.yaml
   - apps/strimzi-charts-repo.yaml
